@@ -2,6 +2,8 @@
 
 一个 DeepSeek Harness（`dsh web` / `dsh-desktop`）的 6 档性能滑杆插件。
 
+![6 档性能滑杆预览：Pro · high，人物背景与输入框上方滑杆](assets/screenshot.png)
+
 它复刻 Codex 桌面端的性能滑杆交互：一个 6 段式滑杆，每一档同时对应一组
 **模型 + 推理等级（reasoning effort）**。拖动时会在 31 张本地 cutout 人物帧
 （`demo/pics/cutout/frame-00.png` … `frame-30.png`）之间连续切换背景，松手后
@@ -38,6 +40,8 @@ dsh-performance-slider/
 ├── demo/
 │   ├── index.html        # 不依赖 DSH 的独立预览页
 │   └── pics/cutout/      # 31 张 frame-00..30 人物背景图
+├── assets/
+│   └── screenshot.png    # README 预览截图
 ├── cordis.patch.yml      # dsh.bundle 层：安装后自动 insert 插件行
 ├── package.json
 └── README.md
