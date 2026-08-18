@@ -1,0 +1,5 @@
+# Append this entry to the top-level array in:
+#   ~/.dsh/profiles/web/cordis.patch.yml
+- insert:
+    - id: dsh-performance-slider
+      name: dsh-performance-slider

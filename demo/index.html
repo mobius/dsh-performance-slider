@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepSeek Harness · 6 档性能滑杆预览</title>
+<style>
+  :root {
+    --bg-base: #081120;
+    --bg-layer-1: rgba(13, 24, 45, 0.88);
+    --bg-layer-2: rgba(18, 31, 57, 0.86);
+    --sidebar-fill: rgba(7, 15, 30, 0.82);
+    --brand: #4d7cfe;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --border: rgba(148, 163, 184, 0.16);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background-color: var(--bg-base);
+    background-image:
+      radial-gradient(1100px 640px at 85% -8%, rgba(77,124,254,0.26), transparent 62%),
+      radial-gradient(900px 620px at -8% 108%, rgba(56,189,248,0.14), transparent 55%),
+      linear-gradient(180deg, #081120 0%, #0a1326 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    transition: background-image .25s ease, background-color .25s ease;
+  }
+  .app {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 240px 1fr 300px;
+    gap: 1px;
+    background: transparent;
+  }
+  .pane {
+    padding: 24px 18px;
+    background: var(--bg-layer-1);
+    backdrop-filter: blur(10px);
+  }
+  .sidebar { background: var(--sidebar-fill); }
+  .details { border-left: 1px solid var(--border); }
+  .brand { color: var(--brand); font-weight: 700; }
+  h1 { margin: 0 0 6px; font-size: 15px; font-weight: 650; }
+  h2 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
+  .fake { margin-top: 18px; padding: 12px; border-radius: 10px; background: var(--bg-layer-2); border: 1px solid var(--border); }
+  .fake + .fake { margin-top: 8px; }
+  .fake p { margin: 0; color: var(--text-dim); font-size: 12px; }
+
+  .dshps_dock {
+    position: sticky; top: 18px; z-index: 10;
+    width: min(760px, calc(100vw - 48px)); margin: 0 auto;
+    display: flex; flex-direction: column; gap: 8px; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 16px;
+    background: var(--bg-layer-2); box-shadow: 0 20px 60px rgba(0,0,0,.28);
+  }
+  .dshps_header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .dshps_title { font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
+  .dshps_summary { color: var(--brand); font-weight: 600; }
+  .dshps_slider { padding: 4px 2px 0; }
+    .dshps_range {
+      width: 100%; margin: 0; display: block; appearance: none; -webkit-appearance: none;
+      height: 28px; background: transparent; cursor: pointer;
+    }
+    .dshps_range::-webkit-slider-runnable-track {
+      height: 10px; border-radius: 999px;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border);
+    }
+    .dshps_range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--brand); margin-top: -7px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35); transition: border-color .15s ease;
+    }
+    .dshps_range::-moz-range-track {
+      height: 10px; border-radius: 999px;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border);
+    }
+    .dshps_range::-moz-range-thumb {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+  .dshps_ticks { display: grid; grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr 0.5fr; gap: 4px; margin-top: 8px; }
+    .dshps_tick {
+      min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+      border: 0; background: transparent; color: var(--text-dim); font: inherit; cursor: pointer;
+      padding: 2px 0;
+    }
+    .dshps_tick:hover { color: var(--text); }
+    .dshps_tick[data-active="true"] { color: var(--brand); }
+    .dshps_tick[data-align="start"] { align-items: flex-start; }
+    .dshps_tick[data-align="end"] { align-items: flex-end; }
+    .dshps_segment {
+    min-width: 0; height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    border: 0; border-radius: 9px; background: transparent; color: var(--text-dim); font: inherit; cursor: pointer;
+  }
+  .dshps_segment:hover { background: rgba(148,163,184,.10); }
+  .dshps_segment[data-active="true"] { background: var(--brand); color: #fff; }
+  .dshps_index { font-size: 11px; line-height: 14px; font-weight: 700; opacity: .75; }
+  .dshps_model { font-size: 12px; line-height: 16px; font-weight: 650; }
+  .dshps_effort { font-size: 10px; line-height: 14px; opacity: .8; }
+
+    /* Full-width performance-bar slider (later rules override the base above) */
+    .dshps_slider { padding: 2px 0 0; }
+    .dshps_range {
+      width: 100%; min-width: 100%; box-sizing: border-box; height: 32px; margin: 0; padding: 0;
+      display: block; appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer;
+    }
+    .dshps_range::-webkit-slider-runnable-track {
+      width: 100%; height: 14px; border-radius: 999px;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border);
+    }
+    .dshps_range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--brand); margin-top: -6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+    .dshps_range::-moz-range-track {
+      width: 100%; height: 14px; border-radius: 999px;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border);
+    }
+    .dshps_range::-moz-range-thumb {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+  .dshps_perfbar {
+      position: relative; width: 100%; height: 32px; display: flex; align-items: center;
+      border-radius: 999px; cursor: pointer; touch-action: none; outline: none;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border);
+    }
+    .dshps_perfbar:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .dshps_perfbar_thumb {
+      position: absolute; top: 50%; left: 0%;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--brand);
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
+      transform: translate(-50%, -50%); pointer-events: none;
+    }
+    .dshps_slider::before { display: none; }
+      .dshps_notice { text-align: center; color: var(--text-dim); font-size: 12px; }
+  .dshps_notice[data-kind="error"] { color: #f7597c; }
+
+    /* Guaranteed full-width bar underneath the native range track */
+    .dshps_slider { position: relative; padding: 10px 0 0; }
+    .dshps_slider::before {
+      content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 14px; border-radius: 999px;
+      background: linear-gradient(90deg, #4d7cfe, #23c9b0 20%, #9673f6 40%, #2ec98b 60%, #f5a524 80%, #f7597c 100%);
+      border: 1px solid var(--border); pointer-events: none;
+    }
+    .dshps_range { position: relative; z-index: 1; width: 100%; min-width: 100%; }
+    .dshps_range::-webkit-slider-runnable-track { background: transparent; border-color: transparent; }
+    .dshps_range::-moz-range-track { background: transparent; border-color: transparent; }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .details, .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="dshps_dock">
+    <div class="dshps_header">
+      <span class="dshps_title">性能 · Performance</span>
+      <span class="dshps_summary" id="summary">Flash · off</span>
+    </div>
+    <div class="dshps_slider">
+        <div class="dshps_perfbar" id="performanceBar" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" aria-label="性能滑杆">
+          <div class="dshps_perfbar_thumb" id="performanceThumb"></div>
+        </div>
+        <div class="dshps_ticks" id="ticks"></div>
+      </div>
+    <div class="dshps_notice" id="notice">拖动滑杆预览 31 张人物背景，松手后落到最近的档位</div>
+  </div>
+
+  <main class="app">
+    <aside class="pane sidebar">
+      <h1>DeepSeek <span class="brand">Harness</span></h1>
+      <h2>侧栏</h2>
+      <div class="fake"><p>会话列表 · Sessions</p></div>
+      <div class="fake"><p>工作区 · Workspace</p></div>
+      <div class="fake"><p>设置 · Settings</p></div>
+    </aside>
+    <section class="pane">
+      <h2>对话</h2>
+      <div class="fake"><p>这张预览页模拟 dsh web 的版式。</p></div>
+      <div class="fake"><p>真实插件会把滑杆注册到输入框上方的 conversation.input.dock。</p></div>
+      <div class="fake"><p>模型 / 推理等级通过 session.selectModel RPC 下发。</p></div>
+      <div class="fake"><p>背景使用 demo/pics/cutout 里 31 张人物图片，拖动时连续显示，松手落到最近档位。</p></div>
+    </section>
+    <aside class="pane details">
+      <h2>详情</h2>
+      <div class="fake"><p>当前背景 token</p></div>
+      <div class="fake"><p id="tokens"></p></div>
+    </aside>
+  </main>
+
+<script>
+  const LEVELS = [
+    {
+      modelShort: 'Flash', model: 'deepseek-v4-flash', effort: 'off', label: '关闭推理',
+      bg: 'rgba(8,17,32,0.22)', layer1: 'rgba(13,24,45,0.42)', layer2: 'rgba(18,31,57,0.50)',
+      sidebar: 'rgba(7,15,30,0.38)', brand: '#4d7cfe',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(77,124,254,0.26), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(56,189,248,0.14), transparent 55%), linear-gradient(180deg, #081120 0%, #0a1326 100%)'
+    },
+    {
+      modelShort: 'Flash', model: 'deepseek-v4-flash', effort: 'low', label: '轻推理',
+      bg: 'rgba(6,23,26,0.22)', layer1: 'rgba(8,29,34,0.42)', layer2: 'rgba(11,37,43,0.50)',
+      sidebar: 'rgba(5,20,24,0.38)', brand: '#23c9b0',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(35,201,176,0.22), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(14,116,144,0.20), transparent 55%), linear-gradient(180deg, #06171a 0%, #082127 100%)'
+    },
+    {
+      modelShort: 'Flash', model: 'deepseek-v4-flash', effort: 'max', label: '极限推理',
+      bg: 'rgba(13,10,29,0.22)', layer1: 'rgba(22,17,46,0.42)', layer2: 'rgba(28,21,58,0.50)',
+      sidebar: 'rgba(14,10,32,0.38)', brand: '#9673f6',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(150,115,246,0.24), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(217,70,239,0.16), transparent 55%), linear-gradient(180deg, #0d0a1d 0%, #130e2b 100%)'
+    },
+    {
+      modelShort: 'Pro', model: 'deepseek-v4-pro', effort: 'off', label: '关闭推理',
+      bg: 'rgba(7,22,15,0.22)', layer1: 'rgba(10,31,23,0.42)', layer2: 'rgba(13,39,29,0.50)',
+      sidebar: 'rgba(6,23,16,0.38)', brand: '#2ec98b',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(46,201,139,0.22), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(5,150,105,0.18), transparent 55%), linear-gradient(180deg, #07160f 0%, #092018 100%)'
+    },
+    {
+      modelShort: 'Pro', model: 'deepseek-v4-pro', effort: 'high', label: '高推理',
+      bg: 'rgba(26,16,8,0.22)', layer1: 'rgba(34,23,12,0.42)', layer2: 'rgba(43,29,15,0.50)',
+      sidebar: 'rgba(26,16,8,0.38)', brand: '#f5a524',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(245,165,36,0.22), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(217,119,6,0.20), transparent 55%), linear-gradient(180deg, #1a1008 0%, #221708 100%)'
+    },
+    {
+      modelShort: 'Pro', model: 'deepseek-v4-pro', effort: 'max', label: '极限推理',
+      bg: 'rgba(28,8,14,0.22)', layer1: 'rgba(39,14,24,0.42)', layer2: 'rgba(48,18,30,0.50)',
+      sidebar: 'rgba(29,8,17,0.38)', brand: '#f7597c',
+      aura: 'radial-gradient(1100px 640px at 85% -8%, rgba(247,89,124,0.24), transparent 62%), radial-gradient(900px 620px at -8% 108%, rgba(190,18,60,0.22), transparent 55%), linear-gradient(180deg, #1c080e 0%, #270b16 100%)'
+    }
+  ];
+
+  const STORAGE_KEY = 'dsh-performance-slider.demo.level.v1';
+  const FRAME_COUNT = 31;
+  const LEVEL_STEP = (FRAME_COUNT - 1) / (LEVELS.length - 1);
+  const SCRIM = 'linear-gradient(180deg, rgba(7,9,14,0.30), rgba(7,9,14,0.52))';
+
+  const root = document.documentElement;
+  const bar = document.getElementById('performanceBar');
+    const thumb = document.getElementById('performanceThumb');
+    let dragging = false;
+    const range = { addEventListener() {}, value: 0 };
+  const ticksEl = document.getElementById('ticks');
+  const summary = document.getElementById('summary');
+  const notice = document.getElementById('notice');
+  const tokensEl = document.getElementById('tokens');
+
+  function frameUrl(frame) {
+    return `pics/cutout/frame-${String(frame).padStart(2, '0')}.png`;
+  }
+
+  function frameForLevel(level) {
+    return Math.round(level * LEVEL_STEP);
+  }
+
+  function levelForFrame(frame) {
+    return Math.max(0, Math.min(LEVELS.length - 1, Math.round(frame / LEVEL_STEP)));
+  }
+
+  function readLevel() {
+    try {
+      const n = Number(localStorage.getItem(STORAGE_KEY));
+      return Number.isInteger(n) && n >= 0 && n < LEVELS.length ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function updateTicks(activeLevel) {
+    for (const tick of ticksEl.querySelectorAll('button')) {
+      const level = Number(tick.dataset.level);
+      tick.dataset.active = level === activeLevel ? 'true' : 'false';
+      tick.setAttribute('aria-pressed', tick.dataset.active === 'true' ? 'true' : 'false');
+    }
+  }
+
+  function setBarFrame(frame) {
+      const safeFrame = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(frame)));
+      const percent = (safeFrame / (FRAME_COUNT - 1)) * 100;
+      thumb.style.left = `${percent}%`;
+      bar.dataset.frame = String(safeFrame);
+      bar.setAttribute('aria-valuenow', String(safeFrame));
+      bar.setAttribute('aria-valuetext', `frame ${String(safeFrame).padStart(2, '0')}`);
+    }
+
+    function frameFromClientX(clientX) {
+      const rect = bar.getBoundingClientRect();
+      const ratio = (clientX - rect.left) / Math.max(1, rect.width);
+      return Math.round(Math.max(0, Math.min(1, ratio)) * (FRAME_COUNT - 1));
+    }
+
+    function applyFrame(frame, announce) {
+    const safeFrame = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(frame)));
+    const level = levelForFrame(safeFrame);
+    const preset = LEVELS[level];
+    const url = frameUrl(safeFrame);
+
+    root.style.setProperty('--bg-base', preset.bg);
+    root.style.setProperty('--bg-layer-1', preset.layer1);
+    root.style.setProperty('--bg-layer-2', preset.layer2);
+    root.style.setProperty('--sidebar-fill', preset.sidebar);
+    root.style.setProperty('--brand', preset.brand);
+
+    document.body.style.backgroundImage = `${SCRIM}, url("${url}"), ${preset.aura}`;
+    document.body.style.backgroundPosition = 'center top, center bottom, center top';
+    document.body.style.backgroundSize = 'cover, contain, cover';
+    document.body.style.backgroundRepeat = 'no-repeat, no-repeat, no-repeat';
+
+    summary.textContent = `${preset.modelShort} · ${preset.effort} · frame ${String(safeFrame).padStart(2, '0')}`;
+    tokensEl.textContent = `${url} / ${preset.bg}`;
+    updateTicks(level);
+      setBarFrame(safeFrame);
+
+    if (announce) {
+      notice.textContent = `已落到档位 ${level + 1}：${preset.model} · ${preset.effort}`;
+      notice.dataset.kind = 'ok';
+    }
+  }
+
+  function applyLevel(level, announce) {
+    const safeLevel = Math.max(0, Math.min(LEVELS.length - 1, Math.round(level)));
+    const frame = frameForLevel(safeLevel);
+    setBarFrame(frame);
+    applyFrame(frame, announce);
+    try { localStorage.setItem(STORAGE_KEY, String(safeLevel)); } catch {}
+  }
+
+  LEVELS.forEach((preset, index) => {
+    const tick = document.createElement('button');
+    tick.type = 'button';
+    tick.className = 'dshps_tick';
+    tick.dataset.level = String(index);
+      tick.dataset.align = index === 0 ? 'start' : index === LEVELS.length - 1 ? 'end' : 'center';
+    tick.innerHTML = `<span class="dshps_model"></span><span class="dshps_effort"></span>`;
+    tick.querySelector('.dshps_model').textContent = preset.modelShort;
+    tick.querySelector('.dshps_effort').textContent = preset.label;
+    tick.title = `${preset.model} · ${preset.effort}`;
+    tick.addEventListener('click', () => applyLevel(index, true));
+    ticksEl.appendChild(tick);
+  });
+
+  range.addEventListener('input', () => {
+    const frame = Math.round(Number(range.value));
+    applyFrame(frame, false);
+  });
+
+  range.addEventListener('change', () => {
+    const level = levelForFrame(Number(range.value));
+    applyLevel(level, true);
+  });
+
+  bar.addEventListener('pointerdown', (event) => {
+      dragging = true;
+      if (bar.setPointerCapture) bar.setPointerCapture(event.pointerId);
+      applyFrame(frameFromClientX(event.clientX), false);
+    });
+
+    bar.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      applyFrame(frameFromClientX(event.clientX), false);
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      const level = levelForFrame(Number(bar.dataset.frame || 0));
+      applyLevel(level, true);
+    }
+
+    bar.addEventListener('pointerup', endDrag);
+    bar.addEventListener('pointercancel', endDrag);
+    bar.addEventListener('pointerleave', () => {
+      if (dragging && !bar.hasPointerCapture) endDrag();
+    });
+
+    bar.addEventListener('keydown', (event) => {
+      const current = Number(bar.dataset.frame || 0);
+      let next = null;
+      if (event.key === 'ArrowLeft') next = current - 1;
+      if (event.key === 'ArrowRight') next = current + 1;
+      if (next === null) return;
+      event.preventDefault();
+      const frame = Math.max(0, Math.min(FRAME_COUNT - 1, next));
+      applyFrame(frame, false);
+      applyLevel(levelForFrame(frame), true);
+    });
+
+    applyLevel(readLevel(), false);
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Applied when this package is listed in a profile's `dsh.profile.bundles`
+# (`dsh plugin --profile web add …` does that automatically).
+- insert:
+    - id: dsh-performance-slider
+      name: dsh-performance-slider
