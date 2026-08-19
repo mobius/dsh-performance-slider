@@ -1,8 +1,10 @@
 # dsh-performance-slider
 
-一个 DeepSeek Harness（`dsh web` / `dsh-desktop`）的 6 档性能滑杆插件。
+**中文：** DeepSeek Harness（`dsh web` / `dsh-desktop`）的 Codex 风格 6 档性能滑杆。每一档同时切换**模型 + 推理等级**，并换上对应的人物背景。
 
-![6 档性能滑杆预览：Pro · high，人物背景与输入框上方滑杆](assets/screenshot.png)
+**English:** A Codex-style 6-level performance slider for DeepSeek Harness. Each level maps a model + reasoning effort and a cutout background.
+
+![6 档性能滑杆预览：Pro · high，人物背景与输入框上方滑杆](https://raw.githubusercontent.com/mobius/dsh-performance-slider/main/assets/screenshot.png)
 
 它复刻 Codex 桌面端的性能滑杆交互：一个 6 段式滑杆，每一档同时对应一组
 **模型 + 推理等级（reasoning effort）**。拖动时会在 31 张本地 cutout 人物帧

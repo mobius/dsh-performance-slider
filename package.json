@@ -1,7 +1,7 @@
 {
   "name": "dsh-performance-slider",
-  "version": "0.2.1",
-  "description": "A 6-level Codex-style performance slider for the DeepSeek Harness web surface: each level maps a model + reasoning effort and switches through 31 local cutout background frames served by the plugin host.",
+  "version": "0.2.2",
+  "description": "Codex 风格 6 档性能滑杆：每档绑定模型 + 推理等级，并切换 31 张本地人物背景。 / Codex-style 6-level performance slider for DeepSeek Harness (dsh web).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
